@@ -2,10 +2,13 @@ package com.moagrius.widget;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Canvas;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
+import android.view.ViewConfiguration;
 import android.view.animation.Interpolator;
 
 import java.lang.ref.WeakReference;
@@ -31,6 +34,7 @@ public class ScalingScrollView extends ScrollView implements
   private float mMinScale = 0f;
   private float mMaxScale = 1f;
   private float mEffectiveMinScale = 0f;
+  private float mTouchSlop;
 
   private boolean mWillHandleContentSize;
   private boolean mShouldVisuallyScaleContents;
@@ -48,6 +52,7 @@ public class ScalingScrollView extends ScrollView implements
     super(context, attrs, defStyleAttr);
     mScaleGestureDetector = new ScaleGestureDetector(context, this);
     mZoomScrollAnimator = new ZoomScrollAnimator(this);
+    mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
   }
 
   @Override
@@ -84,10 +89,7 @@ public class ScalingScrollView extends ScrollView implements
       mScale = scale;
       resetScrollPositionToWithinLimits();
       if (mShouldVisuallyScaleContents && hasContent()) {
-        getChild().setPivotX(0);
-        getChild().setPivotY(0);  // TODO: this is a hassle to prefab but would be more efficient
-        getChild().setScaleX(mScale);
-        getChild().setScaleY(mScale);
+        invalidate();
       }
       if (mScaleChangedListener != null) {
         mScaleChangedListener.onScaleChanged(this, mScale, previous);
@@ -193,13 +195,33 @@ public class ScalingScrollView extends ScrollView implements
     if (scale == mScale) {
       return;
     }
-    int x = getOffsetScrollXFromScale(offsetX, scale, mScale);
-    int y = getOffsetScrollYFromScale(offsetY, scale, mScale);
+//    int x = getOffsetScrollXFromScale(offsetX, scale, mScale);
+//    int y = getOffsetScrollYFromScale(offsetY, scale, mScale);
+
+    float scaleDelta = scale - mScale;
+    float offsetScale = 1 + scaleDelta;
+
+    Log.d("pinch", "scaleDelta=" + scaleDelta + ", offsetScale=" + offsetScale);
+
+    float relativeX = getScrollX() / (float) getContentWidth();
+    float relativeY = getScrollY() / (float) getContentHeight();
+
+    Log.d("pinch", "relativeX=" + relativeX + ", relativeY=" + relativeY + ", scrollX=" + getScrollX() + ", scrollY=" + getScrollY());
+
+    float scaledOffsetX = offsetX * offsetScale;
+    float scaledOffsetY = offsetY * offsetScale;
+
+    Log.d("pinch", "scaledOffsetX=" + scaledOffsetX + ", scaledOffsetY=" + scaledOffsetY);
 
     setScale(scale);
 
-    x = getConstrainedScrollX(x);
-    y = getConstrainedScrollY(y);
+    int scaledX = (int) (relativeX * getContentWidth());
+    int scaledY = (int) (relativeY * getContentHeight());
+
+    Log.d("pinch", "scaledX=" + scaledX + ", scaledY=" + scaledY);
+
+    int x = getConstrainedScrollX((int) (scaledX - scaledOffsetX));
+    int y = getConstrainedScrollY((int) (scaledY - scaledOffsetY));
 
     scrollTo(x, y);
   }
@@ -242,9 +264,11 @@ public class ScalingScrollView extends ScrollView implements
   @Override
   public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
     float currentScale = mScale * mScaleGestureDetector.getScaleFactor();
+    Log.d("pinch", "gestures scale=" + mScaleGestureDetector.getScaleFactor() + ", scale to set=" + currentScale);
+    Log.d("pinch", "focusX=" + scaleGestureDetector.getFocusX() + ", slop=" + mTouchSlop + ", span=" + scaleGestureDetector.getCurrentSpanX());
     setScaleFromPosition(
-      (int) scaleGestureDetector.getFocusX(),
-      (int) scaleGestureDetector.getFocusY(),
+      (int) (scaleGestureDetector.getFocusX()),
+      (int) (scaleGestureDetector.getFocusY() ),
       currentScale);
     return true;
   }
@@ -257,6 +281,14 @@ public class ScalingScrollView extends ScrollView implements
   @Override
   public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
 
+  }
+
+  @Override
+  public void onDraw( Canvas canvas ) {
+    super.onDraw( canvas );
+    if (mShouldVisuallyScaleContents) {
+      canvas.scale(mScale, mScale);
+    }
   }
 
   public interface ScaleChangedListener {

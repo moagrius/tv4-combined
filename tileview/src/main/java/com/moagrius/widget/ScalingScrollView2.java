@@ -5,10 +5,11 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.ScaleGestureDetector;
 import android.view.animation.Interpolator;
+import android.widget.FrameLayout;
 
 import java.lang.ref.WeakReference;
 
-public class ScalingScrollView2 extends ScrollView {
+public class ScalingScrollView2 extends FrameLayout {
 
   public enum MinimumScaleMode {CONTAIN, COVER, NONE}
 

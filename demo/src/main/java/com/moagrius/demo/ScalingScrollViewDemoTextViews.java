@@ -1,5 +1,6 @@
 package com.moagrius.demo;
 
+import android.app.ActionBar;
 import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -18,12 +19,12 @@ public class ScalingScrollViewDemoTextViews extends Activity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_demos_scalingscrollview_textviews);
     ScalingScrollView scalingScrollView = findViewById(R.id.scalingscrollview);
-    //scalingScrollView.setShouldVisuallyScaleContents(true);
+    scalingScrollView.setShouldVisuallyScaleContents(true);
     LinearLayout linearLayout = findViewById(R.id.linearlayout);
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 25; i++) {
       LinearLayout row = new LinearLayout(this);
-      Helpers.populateLinearLayout(row, 100);
-      linearLayout.addView(row);
+      Helpers.populateLinearLayout(row, 25);
+      linearLayout.addView(row, new LinearLayout.LayoutParams(ActionBar.LayoutParams.WRAP_CONTENT, ActionBar.LayoutParams.WRAP_CONTENT));
     }
   }
 

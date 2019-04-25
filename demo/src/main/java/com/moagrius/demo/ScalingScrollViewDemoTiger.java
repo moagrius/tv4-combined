@@ -18,7 +18,7 @@ public class ScalingScrollViewDemoTiger extends Activity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_demos_scalingscrollview_tiger);
     ScalingScrollView scalingScrollView = findViewById(R.id.scalingscrollview);
-    //scalingScrollView.setScaleLimits(0, 10);
-    //scalingScrollView.setShouldVisuallyScaleContents(true);
+    scalingScrollView.setScaleLimits(0, 10);
+    scalingScrollView.setShouldVisuallyScaleContents(true);
   }
 }
