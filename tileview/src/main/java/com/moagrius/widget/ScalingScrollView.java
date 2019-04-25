@@ -4,11 +4,9 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
-import android.view.ViewConfiguration;
 import android.view.animation.Interpolator;
 
 import java.lang.ref.WeakReference;
@@ -34,7 +32,6 @@ public class ScalingScrollView extends ScrollView implements
   private float mMinScale = 0f;
   private float mMaxScale = 1f;
   private float mEffectiveMinScale = 0f;
-  private float mTouchSlop;
 
   private boolean mWillHandleContentSize;
   private boolean mShouldVisuallyScaleContents;
@@ -52,14 +49,19 @@ public class ScalingScrollView extends ScrollView implements
     super(context, attrs, defStyleAttr);
     mScaleGestureDetector = new ScaleGestureDetector(context, this);
     mZoomScrollAnimator = new ZoomScrollAnimator(this);
-    mTouchSlop = ViewConfiguration.get(getContext()).getScaledTouchSlop();
   }
 
+//  @Override
+//  public boolean dispatchTouchEvent(MotionEvent event) {
+//    boolean dispatched = super.dispatchTouchEvent(event);
+//    boolean scaled = mScaleGestureDetector.onTouchEvent(event);
+//    return dispatched || scaled;
+//  }
+
   @Override
-  public boolean dispatchTouchEvent(MotionEvent event) {
-    boolean dispatched = super.dispatchTouchEvent(event);
-    boolean scaled = mScaleGestureDetector.onTouchEvent(event);
-    return dispatched || scaled;
+  public boolean onTouchEvent(MotionEvent event) {
+    mScaleGestureDetector.onTouchEvent(event);
+    return mIsScaling || super.onTouchEvent(event);
   }
 
   @Override
@@ -88,9 +90,6 @@ public class ScalingScrollView extends ScrollView implements
       float previous = mScale;
       mScale = scale;
       resetScrollPositionToWithinLimits();
-      if (mShouldVisuallyScaleContents && hasContent()) {
-        invalidate();
-      }
       if (mScaleChangedListener != null) {
         mScaleChangedListener.onScaleChanged(this, mScale, previous);
       }
@@ -195,33 +194,13 @@ public class ScalingScrollView extends ScrollView implements
     if (scale == mScale) {
       return;
     }
-//    int x = getOffsetScrollXFromScale(offsetX, scale, mScale);
-//    int y = getOffsetScrollYFromScale(offsetY, scale, mScale);
-
-    float scaleDelta = scale - mScale;
-    float offsetScale = 1 + scaleDelta;
-
-    Log.d("pinch", "scaleDelta=" + scaleDelta + ", offsetScale=" + offsetScale);
-
-    float relativeX = getScrollX() / (float) getContentWidth();
-    float relativeY = getScrollY() / (float) getContentHeight();
-
-    Log.d("pinch", "relativeX=" + relativeX + ", relativeY=" + relativeY + ", scrollX=" + getScrollX() + ", scrollY=" + getScrollY());
-
-    float scaledOffsetX = offsetX * offsetScale;
-    float scaledOffsetY = offsetY * offsetScale;
-
-    Log.d("pinch", "scaledOffsetX=" + scaledOffsetX + ", scaledOffsetY=" + scaledOffsetY);
+    int x = getOffsetScrollXFromScale(offsetX, scale, mScale);
+    int y = getOffsetScrollYFromScale(offsetY, scale, mScale);
 
     setScale(scale);
 
-    int scaledX = (int) (relativeX * getContentWidth());
-    int scaledY = (int) (relativeY * getContentHeight());
-
-    Log.d("pinch", "scaledX=" + scaledX + ", scaledY=" + scaledY);
-
-    int x = getConstrainedScrollX((int) (scaledX - scaledOffsetX));
-    int y = getConstrainedScrollY((int) (scaledY - scaledOffsetY));
+    x = getConstrainedScrollX(x);
+    y = getConstrainedScrollY(y);
 
     scrollTo(x, y);
   }
@@ -261,26 +240,27 @@ public class ScalingScrollView extends ScrollView implements
     return true;
   }
 
+  private boolean mIsScaling;
+
   @Override
   public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
     float currentScale = mScale * mScaleGestureDetector.getScaleFactor();
-    Log.d("pinch", "gestures scale=" + mScaleGestureDetector.getScaleFactor() + ", scale to set=" + currentScale);
-    Log.d("pinch", "focusX=" + scaleGestureDetector.getFocusX() + ", slop=" + mTouchSlop + ", span=" + scaleGestureDetector.getCurrentSpanX());
     setScaleFromPosition(
-      (int) (scaleGestureDetector.getFocusX()),
-      (int) (scaleGestureDetector.getFocusY() ),
+      (int) scaleGestureDetector.getFocusX(),
+      (int) scaleGestureDetector.getFocusY(),
       currentScale);
     return true;
   }
 
   @Override
   public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
+    mIsScaling = true;
     return true;
   }
 
   @Override
   public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
-
+    mIsScaling = false;
   }
 
   @Override
