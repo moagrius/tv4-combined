@@ -21,8 +21,6 @@
     <activity android:name=".ScrollViewDemoHorizontal" />
     <activity android:name=".ScalingScrollViewDemoTextViews" />
     <activity android:name=".ScalingScrollViewDemoTiger" />
-    <activity android:name=".TileViewDemoAdvanced" />
-    <activity android:name=".TileViewDemoSimple" />
   </application>
 
 </manifest>

@@ -15,8 +15,6 @@ public class MainActivity extends Activity {
     findViewById(R.id.textview_demos_scrollview_universal).setOnClickListener(view -> startDemo(ScrollViewDemoUniversal.class));
     findViewById(R.id.textview_demos_scalingscrollview_textviews).setOnClickListener(view -> startDemo(ScalingScrollViewDemoTextViews.class));
     findViewById(R.id.textview_demos_scalingscrollview_tiger).setOnClickListener(view -> startDemo(ScalingScrollViewDemoTiger.class));
-    findViewById(R.id.textview_demos_tileview_advanced).setOnClickListener(view -> startDemo(TileViewDemoAdvanced.class));
-    findViewById(R.id.textview_demos_tileview_simple).setOnClickListener(view -> startDemo(TileViewDemoSimple.class));
   }
 
   private void startDemo(Class<? extends Activity> activityClass) {

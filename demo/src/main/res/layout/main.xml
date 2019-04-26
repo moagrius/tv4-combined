@@ -34,16 +34,6 @@
       android:text="ScalingScrollView Demo (SVG Tiger)"
       style="@style/DemoRow" />
 
-    <TextView
-        android:id="@+id/textview_demos_tileview_simple"
-        android:text="TileView Demo (Simple)"
-        style="@style/DemoRow" />
-    
-    <TextView
-      android:id="@+id/textview_demos_tileview_advanced"
-      android:text="TileView Demo (Advanced)"
-      style="@style/DemoRow" />
-
   </LinearLayout>
 
 </ScrollView>
