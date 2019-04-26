@@ -72,10 +72,8 @@ public class ScalingScrollView extends ScrollView implements
     if (mIsScaling) {
       return true;
     }
-    return super.onTouchEvent(event);
+    return super.dispatchTouchEvent(event);
   }
-
-
 
   @Override
   protected void onLayout( boolean changed, int l, int t, int r, int b ) {
@@ -304,6 +302,7 @@ public class ScalingScrollView extends ScrollView implements
     public ZoomScrollAnimator(ScalingScrollView scalingScrollView) {
       super();
       addUpdateListener(this);
+      addListener(this);
       setFloatValues(0f, 1f);
       setInterpolator(new QuinticInterpolator());
       mScalingScrollViewWeakReference = new WeakReference<>(scalingScrollView);
