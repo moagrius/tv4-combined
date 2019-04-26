@@ -1,13 +1,17 @@
 package com.moagrius.widget;
 
+import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.animation.Interpolator;
+
+import com.moagrius.view.DoubleTapGestureDetector;
 
 import java.lang.ref.WeakReference;
 
@@ -21,6 +25,7 @@ public class ScalingScrollView extends ScrollView implements
 
   public enum MinimumScaleMode {CONTAIN, COVER, NONE}
 
+  private DoubleTapGestureDetector mDoubleTapGestureDetector;
   private ScaleGestureDetector mScaleGestureDetector;
   private ScaleChangedListener mScaleChangedListener;
 
@@ -33,6 +38,7 @@ public class ScalingScrollView extends ScrollView implements
   private float mMaxScale = 1f;
   private float mEffectiveMinScale = 0f;
 
+  private boolean mIsScaling;
   private boolean mWillHandleContentSize;
   private boolean mShouldVisuallyScaleContents;
   private boolean mShouldLoopScale = true;
@@ -47,22 +53,29 @@ public class ScalingScrollView extends ScrollView implements
 
   public ScalingScrollView(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
+    mDoubleTapGestureDetector = new DoubleTapGestureDetector(context, this);
     mScaleGestureDetector = new ScaleGestureDetector(context, this);
     mZoomScrollAnimator = new ZoomScrollAnimator(this);
   }
 
-//  @Override
-//  public boolean dispatchTouchEvent(MotionEvent event) {
-//    boolean dispatched = super.dispatchTouchEvent(event);
-//    boolean scaled = mScaleGestureDetector.onTouchEvent(event);
-//    return dispatched || scaled;
-//  }
+  private void setIsScaling(boolean isScaling) {
+    mIsScaling = isScaling;
+  }
 
   @Override
-  public boolean onTouchEvent(MotionEvent event) {
+  public boolean dispatchTouchEvent(MotionEvent event) {
     mScaleGestureDetector.onTouchEvent(event);
-    return mIsScaling || super.onTouchEvent(event);
+    if (mIsScaling) {
+      return true;
+    }
+    mIsScaling = mDoubleTapGestureDetector.onTouchEvent(event);
+    if (mIsScaling) {
+      return true;
+    }
+    return super.onTouchEvent(event);
   }
+
+
 
   @Override
   protected void onLayout( boolean changed, int l, int t, int r, int b ) {
@@ -228,6 +241,7 @@ public class ScalingScrollView extends ScrollView implements
 
   @Override
   public boolean onDoubleTap(MotionEvent event) {
+    Log.d("double-tap", "double tap");
     float destination = (float) (Math.pow(2, Math.floor(Math.log(mScale * 2) / Math.log(2))));
     float effectiveDestination = mShouldLoopScale && mScale >= mMaxScale ? mMinScale : destination;
     destination = getConstrainedDestinationScale(effectiveDestination);
@@ -239,8 +253,6 @@ public class ScalingScrollView extends ScrollView implements
   public boolean onDoubleTapEvent(MotionEvent event) {
     return true;
   }
-
-  private boolean mIsScaling;
 
   @Override
   public boolean onScale(ScaleGestureDetector scaleGestureDetector) {
@@ -279,7 +291,9 @@ public class ScalingScrollView extends ScrollView implements
    * @author Mike Dunn, 2/2/18.
    */
 
-  private static class ZoomScrollAnimator extends ValueAnimator implements ValueAnimator.AnimatorUpdateListener {
+  private static class ZoomScrollAnimator extends ValueAnimator implements
+      ValueAnimator.AnimatorUpdateListener,
+      ValueAnimator.AnimatorListener {
 
     private WeakReference<ScalingScrollView> mScalingScrollViewWeakReference;
     private ScaleAndScrollState mStartState = new ScaleAndScrollState();
@@ -356,6 +370,7 @@ public class ScalingScrollView extends ScrollView implements
         if (mHasPendingZoomUpdates) {
           float scale = mStartState.scale + (mEndState.scale - mStartState.scale) * progress;
           scalingScrollView.setScale(scale);
+          scalingScrollView.setIsScaling(true);
         }
         if (mHasPendingScrollUpdates) {
           int x = (int) (mStartState.x + (mEndState.x - mStartState.x) * progress);
@@ -363,6 +378,32 @@ public class ScalingScrollView extends ScrollView implements
           scalingScrollView.scrollTo(x, y);
         }
       }
+    }
+
+    @Override
+    public void onAnimationStart(Animator animator) {
+
+    }
+
+    @Override
+    public void onAnimationEnd(Animator animator) {
+      ScalingScrollView scalingScrollView = mScalingScrollViewWeakReference.get();
+      if (scalingScrollView != null) {
+        scalingScrollView.setIsScaling(false);
+      }
+    }
+
+    @Override
+    public void onAnimationCancel(Animator animator) {
+      ScalingScrollView scalingScrollView = mScalingScrollViewWeakReference.get();
+      if (scalingScrollView != null) {
+        scalingScrollView.setIsScaling(false);
+      }
+    }
+
+    @Override
+    public void onAnimationRepeat(Animator animator) {
+
     }
 
     private static class ScaleAndScrollState {
