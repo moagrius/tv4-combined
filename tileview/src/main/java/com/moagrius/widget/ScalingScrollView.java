@@ -100,7 +100,7 @@ public class ScalingScrollView extends ScrollView implements
     if (mScale != scale) {
       float previous = mScale;
       mScale = scale;
-      resetScrollPositionToWithinLimits();
+      //resetScrollPositionToWithinLimits();
       if (mScaleChangedListener != null) {
         mScaleChangedListener.onScaleChanged(this, mScale, previous);
       }
