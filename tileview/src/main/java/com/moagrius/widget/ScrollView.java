@@ -438,7 +438,9 @@ public class ScrollView extends FrameLayout {
         final int x = (int) event.getX(activePointerIndex);
         int deltaY = mLastMotionY - y;
         int deltaX = mLastMotionX - x;
-        if (!mIsBeingDragged && (Math.abs(deltaY) > mTouchSlop || Math.abs(deltaX) > mTouchSlop)) {
+        int distance = (deltaX * deltaX) + (deltaY * deltaY);
+        int touchSlopSquare = mTouchSlop * mTouchSlop;
+        if (!mIsBeingDragged && Math.abs(distance) > touchSlopSquare) {
           final ViewParent parent = getParent();
           if (parent != null) {
             parent.requestDisallowInterceptTouchEvent(true);
@@ -503,7 +505,7 @@ public class ScrollView extends FrameLayout {
     }
   }
 
-  private void endDrag() {
+  protected void endDrag() {
     mIsBeingDragged = false;
     recycleVelocityTracker();
   }

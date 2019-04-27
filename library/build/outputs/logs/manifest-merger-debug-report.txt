@@ -1,0 +1,51 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:1:1-10:12
+INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:1:1-10:12
+INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:1:1-10:12
+INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:1:1-10:12
+INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:1:1-10:12
+INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:1:1-10:12
+INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:1:1-10:12
+	package
+		ADDED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:1:11-42
+		INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+		INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+	android:versionName
+		INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+		ADDED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:1:1-10:12
+		INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+	android:versionCode
+		INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+		ADDED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:1:1-10:12
+		INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+	xmlns:android
+		ADDED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:2:11-69
+application
+ADDED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:4:3-9:50
+	android:supportsRtl
+		ADDED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:8:16-42
+	android:label
+		ADDED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:6:16-48
+	android:roundIcon
+		ADDED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:7:16-61
+	android:icon
+		ADDED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:5:16-50
+	android:allowBackup
+		ADDED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:4:16-42
+	android:theme
+		ADDED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml:9:16-47
+uses-sdk
+INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml reason: use-sdk injection requested
+INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+	android:targetSdkVersion
+		INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+		ADDED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+		INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+		ADDED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml
+		INJECTED from /Users/michaeldunn/Desktop/temp/TileView/library/src/main/AndroidManifest.xml

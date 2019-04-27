@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
+import android.view.ViewConfiguration;
 import android.view.animation.Interpolator;
 
 import com.moagrius.view.DoubleTapGestureDetector;
@@ -37,6 +38,7 @@ public class ScalingScrollView extends ScrollView implements
   private float mMinScale = 0f;
   private float mMaxScale = 1f;
   private float mEffectiveMinScale = 0f;
+  private float mTouchSlop;
 
   private boolean mIsScaling;
   private boolean mWillHandleContentSize;
@@ -56,6 +58,7 @@ public class ScalingScrollView extends ScrollView implements
     mDoubleTapGestureDetector = new DoubleTapGestureDetector(context, this);
     mScaleGestureDetector = new ScaleGestureDetector(context, this);
     mZoomScrollAnimator = new ZoomScrollAnimator(this);
+    mTouchSlop = ViewConfiguration.get(context).getScaledDoubleTapSlop();
   }
 
   private void setIsScaling(boolean isScaling) {
@@ -63,7 +66,7 @@ public class ScalingScrollView extends ScrollView implements
   }
 
   @Override
-  public boolean onTouchEvent(MotionEvent event) {
+  public boolean dispatchTouchEvent(MotionEvent event) {
     mScaleGestureDetector.onTouchEvent(event);
     if (mIsScaling) {
       return true;
@@ -72,7 +75,7 @@ public class ScalingScrollView extends ScrollView implements
     if (mIsScaling) {
       return true;
     }
-    return super.onTouchEvent(event);
+    return super.dispatchTouchEvent(event);
   }
 
   @Override
@@ -205,10 +208,37 @@ public class ScalingScrollView extends ScrollView implements
     if (scale == mScale) {
       return;
     }
+
+//    float deltaScale = scale / mScale;
+//
+//    int x = (int) (getScrollX() * deltaScale);
+//    int y = (int) (getScrollY() * deltaScale);
+
+//    float updatedOffsetX = deltaScale * offsetX;
+//    float updatedOffsetY = deltaScale * offsetY;
+//
+//    float relativeX = getScrollX() / (float) getContentWidth();
+//    float relativeY = getScrollY() / (float) getContentHeight();
+
     int x = getOffsetScrollXFromScale(offsetX, scale, mScale);
     int y = getOffsetScrollYFromScale(offsetY, scale, mScale);
 
     setScale(scale);
+
+//    int x = (int) (relativeX * getContentWidth());
+//    int y = (int) (relativeY * getContentHeight());
+
+    if (!mHasAccountedForSlipDuringThisPinch) {
+      mHasAccountedForSlipDuringThisPinch = true;
+      int scaledSlop = (int) (scale * mTouchSlop);
+      if (scale < mScale) {
+        x -= scaledSlop;  // TODO: * scale?
+        y -= scaledSlop;
+      } else {
+        x += scaledSlop;
+        y += scaledSlop;
+      }
+    }
 
     x = getConstrainedScrollX(x);
     y = getConstrainedScrollY(y);
@@ -262,9 +292,12 @@ public class ScalingScrollView extends ScrollView implements
     return true;
   }
 
+  private boolean mHasAccountedForSlipDuringThisPinch;
+
   @Override
   public boolean onScaleBegin(ScaleGestureDetector scaleGestureDetector) {
     mIsScaling = true;
+    mHasAccountedForSlipDuringThisPinch = false;
     return true;
   }
 
