@@ -8,11 +8,17 @@ import android.view.ViewConfiguration;
 
 public class DoubleTapGestureDetector {
 
+  public interface OnPointerCountChangeListener {
+    void onPointerCounterChange(int pointerCount);
+  }
+
   private int mDoubleTapSlopSquare;
   private static final int DOUBLE_TAP_TIMEOUT = ViewConfiguration.getDoubleTapTimeout();
   private GestureDetector.OnDoubleTapListener mDoubleTapListener;
+  private OnPointerCountChangeListener mOnPointerCountChangeListener;
   private MotionEvent mLastDownEvent;
   private long mLastDownTimestamp;
+  private int mLastPointerCount;
 
   public DoubleTapGestureDetector(Context context, GestureDetector.OnDoubleTapListener listener) {
     mDoubleTapListener = listener;
@@ -20,9 +26,24 @@ public class DoubleTapGestureDetector {
     mDoubleTapSlopSquare = doubleTapSlop * doubleTapSlop;
   }
 
+  public void setOnPointerCountChangeListener(OnPointerCountChangeListener onPointerCountChangeListener) {
+    mOnPointerCountChangeListener = onPointerCountChangeListener;
+  }
+
+  private void notifyPointerCountChanged(int pointerCount) {
+    if (mOnPointerCountChangeListener != null && mLastPointerCount != pointerCount) {
+      mOnPointerCountChangeListener.onPointerCounterChange(pointerCount);
+      mLastPointerCount = pointerCount;
+    }
+  }
+
   public boolean onTouchEvent(MotionEvent event) {
     switch (event.getActionMasked()) {
+      case MotionEvent.ACTION_POINTER_DOWN:
+        notifyPointerCountChanged(event.getPointerCount());
+        return false;
       case MotionEvent.ACTION_DOWN:
+        notifyPointerCountChanged(event.getPointerCount());
         Log.d("DT", "action down");
         if (mLastDownEvent == null) {
           Log.d("DT", "first tap");
@@ -54,7 +75,12 @@ public class DoubleTapGestureDetector {
         mDoubleTapListener.onDoubleTap(event);
         reset();
         return true;
+      case MotionEvent.ACTION_UP:
+      case MotionEvent.ACTION_POINTER_UP:
+        notifyPointerCountChanged(event.getPointerCount());
+        return false;
       case MotionEvent.ACTION_CANCEL:
+        notifyPointerCountChanged(event.getPointerCount());
         Log.d("DT", "action cancel, reset and return false");
         reset();
         return false;

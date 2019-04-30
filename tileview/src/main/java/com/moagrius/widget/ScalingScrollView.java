@@ -21,6 +21,7 @@ import java.lang.ref.WeakReference;
 
 public class ScalingScrollView extends ScrollView implements
   GestureDetector.OnDoubleTapListener,
+    DoubleTapGestureDetector.OnPointerCountChangeListener,
   ScaleGestureDetector.OnScaleGestureListener {
 
   public enum MinimumScaleMode {CONTAIN, COVER, NONE}
@@ -39,7 +40,7 @@ public class ScalingScrollView extends ScrollView implements
   private float mEffectiveMinScale = 0f;
 
   private boolean mIsScaling;
-  private boolean mIsScaleActionComplete;  // scale action is complete, but don't scroll until finger is up
+  private boolean mHasTwoFingersDown;
   private boolean mWillHandleContentSize;
   private boolean mShouldVisuallyScaleContents;
   private boolean mShouldLoopScale = true;
@@ -55,6 +56,7 @@ public class ScalingScrollView extends ScrollView implements
   public ScalingScrollView(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
     mDoubleTapGestureDetector = new DoubleTapGestureDetector(context, this);
+    mDoubleTapGestureDetector.setOnPointerCountChangeListener(this);
     mScaleGestureDetector = new ScaleGestureDetector(context, this);
     mZoomScrollAnimator = new ZoomScrollAnimator(this);
   }
@@ -65,11 +67,6 @@ public class ScalingScrollView extends ScrollView implements
 
   @Override
   public boolean onTouchEvent(MotionEvent event) {
-    if (mIsScaleActionComplete && mIsScaling && (event.getActionMasked() == MotionEvent.ACTION_UP)) {
-      mIsScaling = false;
-      mIsScaleActionComplete = false;
-      return true;
-    }
     mScaleGestureDetector.onTouchEvent(event);
     if (mIsScaling) {
       return true;
@@ -78,7 +75,10 @@ public class ScalingScrollView extends ScrollView implements
     if (mIsScaling) {
       return true;
     }
-    return super.onTouchEvent(event);
+    if (!mHasTwoFingersDown) {
+      return super.onTouchEvent(event);
+    }
+    return false;
   }
 
   @Override
@@ -276,7 +276,12 @@ public class ScalingScrollView extends ScrollView implements
 
   @Override
   public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
-    mIsScaleActionComplete = true;
+    mIsScaling = false;
+  }
+
+  @Override
+  public void onPointerCounterChange(int pointerCount) {
+    mHasTwoFingersDown = pointerCount == 2;
   }
 
   @Override
