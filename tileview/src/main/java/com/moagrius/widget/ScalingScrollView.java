@@ -21,7 +21,6 @@ import java.lang.ref.WeakReference;
 
 public class ScalingScrollView extends ScrollView implements
   GestureDetector.OnDoubleTapListener,
-    DoubleTapGestureDetector.OnPointerCountChangeListener,
   ScaleGestureDetector.OnScaleGestureListener {
 
   public enum MinimumScaleMode {CONTAIN, COVER, NONE}
@@ -40,7 +39,6 @@ public class ScalingScrollView extends ScrollView implements
   private float mEffectiveMinScale = 0f;
 
   private boolean mIsScaling;
-  private boolean mHasTwoFingersDown;
   private boolean mWillHandleContentSize;
   private boolean mShouldVisuallyScaleContents;
   private boolean mShouldLoopScale = true;
@@ -56,7 +54,6 @@ public class ScalingScrollView extends ScrollView implements
   public ScalingScrollView(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
     mDoubleTapGestureDetector = new DoubleTapGestureDetector(context, this);
-    mDoubleTapGestureDetector.setOnPointerCountChangeListener(this);
     mScaleGestureDetector = new ScaleGestureDetector(context, this);
     mZoomScrollAnimator = new ZoomScrollAnimator(this);
   }
@@ -75,10 +72,24 @@ public class ScalingScrollView extends ScrollView implements
     if (mIsScaling) {
       return true;
     }
-    if (!mHasTwoFingersDown) {
+    if (event.getPointerCount() == 1) {
       return super.onTouchEvent(event);
     }
     return false;
+//    switch (event.getPointerCount()) {
+//      case 1:
+//        return super.onTouchEvent(event);
+//      case 2:
+//        mScaleGestureDetector.onTouchEvent(event);
+//        if (mIsScaling) {
+//          return true;
+//        }
+//        mIsScaling = mDoubleTapGestureDetector.onTouchEvent(event);
+//        if (mIsScaling) {
+//          return true;
+//        }
+//    }
+//    return false;
   }
 
   @Override
@@ -277,11 +288,6 @@ public class ScalingScrollView extends ScrollView implements
   @Override
   public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
     mIsScaling = false;
-  }
-
-  @Override
-  public void onPointerCounterChange(int pointerCount) {
-    mHasTwoFingersDown = pointerCount == 2;
   }
 
   @Override
