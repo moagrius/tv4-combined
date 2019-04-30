@@ -38,6 +38,7 @@ public class Tile implements Runnable {
   
   // final
   private final int mSize;
+  private final Object mMutex = new Object();
   private final DrawingView mDrawingView;
   private final Listener mListener;
   private final StreamProvider mStreamProvider;
@@ -178,24 +179,27 @@ public class Tile implements Runnable {
       }
       // no strong disk cache policy, go ahead and decode
       InputStream stream = null;
-      try {
-        stream = mStreamProvider.getStream(mColumn, mRow, context, mDetail.getData());
-        if (stream != null) {
-          // measure it and populate measure options to pass to cache
-          BitmapFactory.decodeStream(stream, null, mMeasureOptions);
-          // if we made it this far, the exact bitmap wasn't in memory, but let's grab the least recently used bitmap from the cache and draw over it
-          mDrawingOptions.inBitmap = mBitmapPool.getBitmapForReuse(this);
-          // the measurement moved the stream's position - it must be reset to use the same stream to draw pixels
-          stream.reset();
-          Bitmap bitmap = BitmapFactory.decodeStream(stream, null, mDrawingOptions);
-          setDecodedBitmap(bitmap);
-          if (mDiskCachePolicy == TileView.DiskCachePolicy.CACHE_ALL) {
-            mDiskCache.put(key, bitmap);
+      synchronized (mMutex) {
+        try {
+          stream = mStreamProvider.getStream(mColumn, mRow, context, mDetail.getData());
+          if (stream != null) {
+            // measure it and populate measure options to pass to cache
+            BitmapFactory.decodeStream(stream, null, mMeasureOptions);
+            stream.close();
+            // if we made it this far, the exact bitmap wasn't in memory, but let's grab the least recently used bitmap from the cache and draw over it
+            mDrawingOptions.inBitmap = mBitmapPool.getBitmapForReuse(this);
+            // the measurement moved the stream's position - it must be reset to use the same stream to draw pixels
+            stream = mStreamProvider.getStream(mColumn, mRow, context, mDetail.getData());
+            Bitmap bitmap = BitmapFactory.decodeStream(stream, null, mDrawingOptions);
+            setDecodedBitmap(bitmap);
+            if (mDiskCachePolicy == TileView.DiskCachePolicy.CACHE_ALL) {
+              mDiskCache.put(key, bitmap);
+            }
           }
-        }
-      } finally {
-        if (stream != null) {
-          stream.close();
+        } finally {
+          if (stream != null) {
+            stream.close();
+          }
         }
       }
     // we don't have a defined zoom level, so we need to use image sub-sampling and disk cache even if reading files locally
@@ -222,10 +226,19 @@ public class Tile implements Runnable {
           if (mState != State.DECODING) {
             return;
           }
-          InputStream stream = mStreamProvider.getStream(mColumn + j, mRow + i, context, mDetail.getData());
-          if (stream != null) {
-            Bitmap piece = BitmapFactory.decodeStream(stream, null, mDrawingOptions);
-            canvas.drawBitmap(piece, j * size, i * size, null);
+          synchronized (mMutex) {
+            InputStream stream = null;
+            try {
+              stream = mStreamProvider.getStream(mColumn + j, mRow + i, context, mDetail.getData());
+              if (stream != null) {
+                Bitmap piece = BitmapFactory.decodeStream(stream, null, mDrawingOptions);
+                canvas.drawBitmap(piece, j * size, i * size, null);
+              }
+            } finally {
+              if (stream != null) {
+                stream.close();
+              }
+            }
           }
         }
       }
@@ -239,21 +252,23 @@ public class Tile implements Runnable {
 
   // we use this signature to call from the Executor, so it can remove tiles via iterator
   public void destroy(boolean removeFromQueue) {
-    if (mState == State.IDLE) {
-      return;
+    synchronized (mMutex) {
+      if (mState == State.IDLE) {
+        return;
+      }
+      if (removeFromQueue) {
+        mThreadPoolExecutor.remove(this);
+      }
+      if (mState == State.DECODED) {
+        mMemoryCache.put(getCacheKey(), mBitmap);
+      }
+      mBitmap = null;
+      mDrawingOptions.inBitmap = null;
+      // since tiles are pooled and reused, make sure to reset the cache key or you'll render the wrong tile from cache
+      mCacheKey = null;
+      mState = State.IDLE;
+      mListener.onTileDestroyed(this);
     }
-    if (removeFromQueue) {
-      mThreadPoolExecutor.remove(this);
-    }
-    if (mState == State.DECODED) {
-      mMemoryCache.put(getCacheKey(), mBitmap);
-    }
-    mBitmap = null;
-    mDrawingOptions.inBitmap = null;
-    // since tiles are pooled and reused, make sure to reset the cache key or you'll render the wrong tile from cache
-    mCacheKey = null;
-    mState = State.IDLE;
-    mListener.onTileDestroyed(this);
   }
 
   public void destroy() {

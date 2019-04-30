@@ -3,6 +3,7 @@ package com.moagrius.tileview.io;
 import android.content.Context;
 import android.util.Log;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -19,6 +20,7 @@ public class StreamProviderFiles implements StreamProvider {
     Log.d("TV", "provider, file.length=" + file.length());
     try {
       InputStream stream = new FileInputStream(file);
+      stream = new BufferedInputStream(stream);
       //stream = new BufferedInputStream(stream);
       Log.d("TV", "after stream....");
       Log.d("TV", "steam available=" + stream.available());
