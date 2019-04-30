@@ -2,37 +2,34 @@ package com.moagrius.view;
 
 import android.content.Context;
 import android.util.Log;
-import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 
-public class DoubleTapGestureDetector {
+public class PointerDownGestureDetector {
 
-  public interface OnPointerCountChangeListener {
+  public interface OnPointerDownListener {
+    void onDoubleTap(MotionEvent event);
     void onPointerCounterChange(int pointerCount);
   }
 
-  private int mDoubleTapSlopSquare;
   private static final int DOUBLE_TAP_TIMEOUT = ViewConfiguration.getDoubleTapTimeout();
-  private GestureDetector.OnDoubleTapListener mDoubleTapListener;
-  private OnPointerCountChangeListener mOnPointerCountChangeListener;
+
+  private OnPointerDownListener mOnPointerDownListener;
   private MotionEvent mLastDownEvent;
+
   private long mLastDownTimestamp;
+  private int mDoubleTapSlopSquare;
   private int mLastPointerCount;
 
-  public DoubleTapGestureDetector(Context context, GestureDetector.OnDoubleTapListener listener) {
-    mDoubleTapListener = listener;
+  public PointerDownGestureDetector(Context context, OnPointerDownListener listener) {
+    mOnPointerDownListener = listener;
     int doubleTapSlop = ViewConfiguration.get(context).getScaledDoubleTapSlop();
     mDoubleTapSlopSquare = doubleTapSlop * doubleTapSlop;
   }
 
-  public void setOnPointerCountChangeListener(OnPointerCountChangeListener onPointerCountChangeListener) {
-    mOnPointerCountChangeListener = onPointerCountChangeListener;
-  }
-
   private void notifyPointerCountChanged(int pointerCount) {
-    if (mOnPointerCountChangeListener != null && mLastPointerCount != pointerCount) {
-      mOnPointerCountChangeListener.onPointerCounterChange(pointerCount);
+    if (mOnPointerDownListener != null && mLastPointerCount != pointerCount) {
+      mOnPointerDownListener.onPointerCounterChange(pointerCount);
       mLastPointerCount = pointerCount;
     }
   }
@@ -72,7 +69,7 @@ public class DoubleTapGestureDetector {
         // we made it this far, so it didn't wander and happened within proscribed delay
         // it's a double tap
         Log.d("DT", "made it this far, send double tap event and return true");
-        mDoubleTapListener.onDoubleTap(event);
+        mOnPointerDownListener.onDoubleTap(event);
         reset();
         return true;
       case MotionEvent.ACTION_UP:
