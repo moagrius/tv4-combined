@@ -39,6 +39,7 @@ public class ScalingScrollView extends ScrollView implements
   private float mEffectiveMinScale = 0f;
 
   private boolean mIsScaling;
+  private boolean mIsScaleActionComplete;  // scale action is complete, but don't scroll until finger is up
   private boolean mWillHandleContentSize;
   private boolean mShouldVisuallyScaleContents;
   private boolean mShouldLoopScale = true;
@@ -64,6 +65,11 @@ public class ScalingScrollView extends ScrollView implements
 
   @Override
   public boolean onTouchEvent(MotionEvent event) {
+    if (mIsScaleActionComplete && mIsScaling && (event.getActionMasked() == MotionEvent.ACTION_UP)) {
+      mIsScaling = false;
+      mIsScaleActionComplete = false;
+      return true;
+    }
     mScaleGestureDetector.onTouchEvent(event);
     if (mIsScaling) {
       return true;
@@ -100,7 +106,7 @@ public class ScalingScrollView extends ScrollView implements
     if (mScale != scale) {
       float previous = mScale;
       mScale = scale;
-      //resetScrollPositionToWithinLimits();
+      resetScrollPositionToWithinLimits();
       if (mScaleChangedListener != null) {
         mScaleChangedListener.onScaleChanged(this, mScale, previous);
       }
@@ -205,13 +211,13 @@ public class ScalingScrollView extends ScrollView implements
     if (scale == mScale) {
       return;
     }
-    int x = getOffsetScrollXFromScale(offsetX, scale, mScale);
-    int y = getOffsetScrollYFromScale(offsetY, scale, mScale);
+
+    float previous = mScale;
 
     setScale(scale);
 
-    x = getConstrainedScrollX(x);
-    y = getConstrainedScrollY(y);
+    int x = getOffsetScrollXFromScale(offsetX, mScale, previous);
+    int y = getOffsetScrollYFromScale(offsetY, mScale, previous);
 
     scrollTo(x, y);
   }
@@ -270,7 +276,7 @@ public class ScalingScrollView extends ScrollView implements
 
   @Override
   public void onScaleEnd(ScaleGestureDetector scaleGestureDetector) {
-    mIsScaling = false;
+    mIsScaleActionComplete = true;
   }
 
   @Override
