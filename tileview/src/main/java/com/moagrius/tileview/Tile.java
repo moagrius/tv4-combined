@@ -146,7 +146,8 @@ public class Tile implements Runnable {
       return;
     }
     mState = State.DECODING;
-    // this line is critical on some devices - we're doing so much work off thread that anything higher priority causes jank
+    // the second line is critical on some devices - we're doing so much work off thread that anything higher priority causes jank
+    Thread.currentThread().setPriority(Thread.MIN_PRIORITY);
     Process.setThreadPriority(Process.THREAD_PRIORITY_LOWEST);
     // putting a thread.sleep of even 100ms here shows that maybe we're doing work off screen that we should not be doing
     updateDestinationRect();
@@ -170,29 +171,29 @@ public class Tile implements Runnable {
         }
       }
       // no strong disk cache policy, go ahead and decode
-      InputStream stream = null;
-      try {
-        stream = mStreamProvider.getStream(mColumn, mRow, context, mDetail.getData());
-        if (stream != null) {
-          // measure it and populate measure options to pass to cache
-          BitmapFactory.decodeStream(stream, null, mMeasureOptions);
-          // if we made it this far, the exact bitmap wasn't in memory, but let's grab the least recently used bitmap from the cache and draw over it
-          //mDrawingOptions.inBitmap = mBitmapPool.getBitmapForReuse(this);
-          // the measurement moved the stream's position - it must be reset to use the same stream to draw pixels
+      InputStream stream = mStreamProvider.getStream(mColumn, mRow, context, mDetail.getData());
+      if (stream != null) {
+        // measure it and populate measure options to pass to cache
+        BitmapFactory.decodeStream(stream, null, mMeasureOptions);
+        // if we made it this far, the exact bitmap wasn't in memory, but let's grab the least recently used bitmap from the cache and draw over it
+        mDrawingOptions.inBitmap = mBitmapPool.getBitmapForReuse(this);
+        // the measurement moved the stream's position - it must be reset to use the same stream to draw pixels
+        // if it doesn't support marking it can't be reset and has to be recreated
+        if (stream.markSupported()) {
+          stream.reset();
+        } else {
           stream.close();
           stream = mStreamProvider.getStream(mColumn, mRow, context, mDetail.getData());
-          Bitmap bitmap = BitmapFactory.decodeStream(stream, null, mDrawingOptions);
-          setDecodedBitmap(bitmap);
-          if (mDiskCachePolicy == TileView.DiskCachePolicy.CACHE_ALL) {
-            mDiskCache.put(key, bitmap);
-          }
         }
-      } finally {
+        Bitmap bitmap = BitmapFactory.decodeStream(stream, null, mDrawingOptions);
         if (stream != null) {
           stream.close();
         }
+        setDecodedBitmap(bitmap);
+        if (mDiskCachePolicy == TileView.DiskCachePolicy.CACHE_ALL) {
+          mDiskCache.put(key, bitmap);
+        }
       }
-
       // we don't have a defined zoom level, so we need to use image sub-sampling and disk cache even if reading files locally
     } else {
       cached = mDiskCache.get(key);
@@ -211,27 +212,23 @@ public class Tile implements Runnable {
       }
       Canvas canvas = new Canvas(bitmap);
       int size = mSize / mImageSample;
-      InputStream stream = null;
+      InputStream stream;
       for (int i = 0; i < mImageSample; i++) {
         for (int j = 0; j < mImageSample; j++) {
           // if we got destroyed while decoding, drop out
           if (mState != State.DECODING) {
             return;
           }
-          try {
-            stream = mStreamProvider.getStream(mColumn + j, mRow + i, context, mDetail.getData());
-            if (stream != null) {
-              Bitmap piece = BitmapFactory.decodeStream(stream, null, mDrawingOptions);
-              if (piece != null) {
-                canvas.drawBitmap(piece, j * size, i * size, null);
-              }
-            }
-          } finally {
-            if (stream != null) {
-              stream.close();
+          stream = mStreamProvider.getStream(mColumn + j, mRow + i, context, mDetail.getData());
+          if (stream != null) {
+            Bitmap piece = BitmapFactory.decodeStream(stream, null, mDrawingOptions);
+            if (piece != null) {
+              canvas.drawBitmap(piece, j * size, i * size, null);
             }
           }
-
+          if (stream != null) {
+            stream.close();
+          }
         }
       }
       setDecodedBitmap(bitmap);
