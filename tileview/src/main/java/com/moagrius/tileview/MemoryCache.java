@@ -91,8 +91,8 @@ public class MemoryCache implements TileView.BitmapCache, TileView.BitmapPool {
 
   private static boolean qualifies(Bitmap candidate, BitmapFactory.Options targetOptions) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-      int width = targetOptions.outWidth / targetOptions.inSampleSize;
-      int height = targetOptions.outHeight / targetOptions.inSampleSize;
+      int width = targetOptions.outWidth >> targetOptions.inSampleSize;
+      int height = targetOptions.outHeight >> targetOptions.inSampleSize;
       int byteCount = width * height * getBytesPerPixel(candidate.getConfig());
       return byteCount <= candidate.getAllocationByteCount();
     }
