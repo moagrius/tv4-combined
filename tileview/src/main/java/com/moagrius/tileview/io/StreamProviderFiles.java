@@ -21,7 +21,6 @@ public class StreamProviderFiles implements StreamProvider {
     try {
       InputStream stream = new FileInputStream(file);
       stream = new BufferedInputStream(stream);
-      //stream = new BufferedInputStream(stream);
       Log.d("TV", "after stream....");
       Log.d("TV", "steam available=" + stream.available());
       return stream;
