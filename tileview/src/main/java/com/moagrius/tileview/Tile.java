@@ -176,15 +176,11 @@ public class Tile implements Runnable {
         if (stream != null) {
           // measure it and populate measure options to pass to cache
           BitmapFactory.decodeStream(stream, null, mMeasureOptions);
-          stream.close();
           // if we made it this far, the exact bitmap wasn't in memory, but let's grab the least recently used bitmap from the cache and draw over it
-          mDrawingOptions.inBitmap = mBitmapPool.getBitmapForReuse(this);
+          //mDrawingOptions.inBitmap = mBitmapPool.getBitmapForReuse(this);
           // the measurement moved the stream's position - it must be reset to use the same stream to draw pixels
-          if (stream.markSupported()) {
-            stream.reset();
-          } else {
-            stream = mStreamProvider.getStream(mColumn, mRow, context, mDetail.getData());
-          }
+          stream.close();
+          stream = mStreamProvider.getStream(mColumn, mRow, context, mDetail.getData());
           Bitmap bitmap = BitmapFactory.decodeStream(stream, null, mDrawingOptions);
           setDecodedBitmap(bitmap);
           if (mDiskCachePolicy == TileView.DiskCachePolicy.CACHE_ALL) {
