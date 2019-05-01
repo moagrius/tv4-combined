@@ -32,6 +32,9 @@ public class MemoryCache implements TileView.BitmapCache, TileView.BitmapPool {
     if (value == null) {
       return null;
     }
+    if (value.getConfig() == null) {
+      return null;
+    }
     mSize += sizeOf(value);
     Bitmap previous = mMap.put(key, value);
     if (previous != null) {
