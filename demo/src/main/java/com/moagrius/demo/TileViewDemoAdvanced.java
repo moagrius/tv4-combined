@@ -71,11 +71,9 @@ public class TileViewDemoAdvanced extends Activity implements Tile.Listener {
     new TileView.Builder(tileView)
         .setSize(17934, 13452)
         .setStreamProvider(new StreamProviderFiles())
-        // /sdcard/tiles
-        //.setDiskCachePolicity(TileView.DiskCachePolicy.CACHE_NONE)
         .defineZoomLevel(base + "/phi-1000000-%1$d_%2$d.jpg")
-        //.defineZoomLevel(1, base + "/phi-500000-%1$d_%2$d.jpg")
-        //.defineZoomLevel(2, base + "/phi-250000-%1$d_%2$d.jpg")
+        .defineZoomLevel(1, base + "/phi-500000-%1$d_%2$d.jpg")
+        .defineZoomLevel(2, base + "/phi-250000-%1$d_%2$d.jpg")
         .installPlugin(new MarkerPlugin(this))
         .installPlugin(new InfoWindowPlugin(infoView))
         .installPlugin(new CoordinatePlugin(WEST, NORTH, EAST, SOUTH))
