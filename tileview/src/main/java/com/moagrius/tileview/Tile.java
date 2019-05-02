@@ -15,6 +15,8 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 public class Tile implements Runnable {
 
+  private static final int UNSCALED_SAMPLE_SIZE = 1;
+
   enum State {
     IDLE, DECODING, DECODED
   }
@@ -59,6 +61,8 @@ public class Tile implements Runnable {
     mDiskCache = diskCache;
     mBitmapPool = bitmapPool;
     mDiskCachePolicy = diskCachePolicy;
+    mMeasureOptions.outWidth = size;
+    mMeasureOptions.outHeight = size;
   }
 
   public State getState() {
@@ -160,7 +164,7 @@ public class Tile implements Runnable {
     }
     Context context = mDrawingView.getContext();
     // garden path - image sample size is 1, we have a detail level defined for this zoom
-    if (mImageSample == 1) {
+    if (mImageSample == UNSCALED_SAMPLE_SIZE) {
       // if we cache everything to disk (usually because we're fetching from remote sources)
       // check the disk cache now and return out if we can
       if (mDiskCachePolicy == TileView.DiskCachePolicy.CACHE_ALL) {
@@ -173,22 +177,10 @@ public class Tile implements Runnable {
       // no strong disk cache policy, go ahead and decode
       InputStream stream = mStreamProvider.getStream(mColumn, mRow, context, mDetail.getData());
       if (stream != null) {
-        // measure it and populate measure options to pass to cache
-        BitmapFactory.decodeStream(stream, null, mMeasureOptions);
         // if we made it this far, the exact bitmap wasn't in memory, but let's grab the least recently used bitmap from the cache and draw over it
         mDrawingOptions.inBitmap = mBitmapPool.getBitmapForReuse(this);
-        // the measurement moved the stream's position - it must be reset to use the same stream to draw pixels
-        // if it doesn't support marking it can't be reset and has to be recreated
-        if (stream.markSupported()) {
-          stream.reset();
-        } else {
-          stream.close();
-          stream = mStreamProvider.getStream(mColumn, mRow, context, mDetail.getData());
-        }
         Bitmap bitmap = BitmapFactory.decodeStream(stream, null, mDrawingOptions);
-        if (stream != null) {
-          stream.close();
-        }
+        stream.close();
         setDecodedBitmap(bitmap);
         if (mDiskCachePolicy == TileView.DiskCachePolicy.CACHE_ALL) {
           mDiskCache.put(key, bitmap);
@@ -202,14 +194,7 @@ public class Tile implements Runnable {
         return;
       }
       // if we're patching, we need a base bitmap to draw on
-      // let's try to use one from the cache if we have one
-      // we need to fake the measurements
-      mMeasureOptions.outWidth = mSize;
-      mMeasureOptions.outHeight = mSize;
-      Bitmap bitmap = mBitmapPool.getBitmapForReuse(this);
-      if (bitmap == null) {
-        bitmap = Bitmap.createBitmap(mSize, mSize, mDrawingOptions.inPreferredConfig);
-      }
+      Bitmap bitmap = Bitmap.createBitmap(mSize, mSize, mDrawingOptions.inPreferredConfig);
       Canvas canvas = new Canvas(bitmap);
       int size = mSize / mImageSample;
       InputStream stream;
