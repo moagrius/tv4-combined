@@ -1,6 +1,7 @@
 package com.moagrius.demo;
 
 import android.app.Activity;
+import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.graphics.CornerPathEffect;
 import android.graphics.Paint;
@@ -11,16 +12,22 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.moagrius.tileview.Tile;
 import com.moagrius.tileview.TileView;
+import com.moagrius.tileview.io.StreamProviderFiles;
 import com.moagrius.tileview.plugins.CoordinatePlugin;
 import com.moagrius.tileview.plugins.HotSpotPlugin;
 import com.moagrius.tileview.plugins.InfoWindowPlugin;
 import com.moagrius.tileview.plugins.MarkerPlugin;
 import com.moagrius.tileview.plugins.PathPlugin;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -29,7 +36,7 @@ import java.util.Locale;
  * @author Mike Dunn, 2/4/18.
  */
 
-public class TileViewDemoAdvanced extends Activity {
+public class TileViewDemoAdvanced extends Activity implements Tile.Listener {
 
   public static final double NORTH = -75.17261900652977;
   public static final double WEST = 39.9639998777094;
@@ -50,18 +57,23 @@ public class TileViewDemoAdvanced extends Activity {
   protected void onCreate(@Nullable Bundle savedInstanceState) {
 
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_demos_tileview);
+    setContentView(R.layout.activity_demos_tileview_advanced);
+
+    Button button = findViewById(R.id.button);
+    button.setOnClickListener(this::copyTilesToSdCard);
 
     View infoView = new TextView(this);
     infoView.setPadding(100, 100, 100, 100);
     infoView.setBackgroundColor(Color.GRAY);
 
     TileView tileView = findViewById(R.id.tileview);
+    String base = "/data/user/0/com.moagrius.demo/files";
     new TileView.Builder(tileView)
         .setSize(17934, 13452)
-        .defineZoomLevel("tiles/phi-1000000-%1$d_%2$d.jpg")
-        .defineZoomLevel(1, "tiles/phi-500000-%1$d_%2$d.jpg")
-        .defineZoomLevel(2, "tiles/phi-250000-%1$d_%2$d.jpg")
+        .setStreamProvider(new StreamProviderFiles())
+        .defineZoomLevel(base + "/phi-1000000-%1$d_%2$d.jpg")
+        .defineZoomLevel(1, base + "/phi-500000-%1$d_%2$d.jpg")
+        .defineZoomLevel(2, base + "/phi-250000-%1$d_%2$d.jpg")
         .installPlugin(new MarkerPlugin(this))
         .installPlugin(new InfoWindowPlugin(infoView))
         .installPlugin(new CoordinatePlugin(WEST, NORTH, EAST, SOUTH))
@@ -141,5 +153,39 @@ public class TileViewDemoAdvanced extends Activity {
 
   }
 
+  public void copyTilesToSdCard(View view) {
+    new Thread(() -> {
+      try {
+        copyTilesSync();
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+      Log.d("TV", "done copying");
+    }).start();
+  }
 
+  private void copyTilesSync() throws Exception {
+    File sdcard = getFilesDir();
+    AssetManager assetManager = getAssets();
+    String[] assetPaths = getAssets().list("tiles");
+    for (String assetPath : assetPaths) {
+      InputStream assetStream = assetManager.open("tiles/" + assetPath);
+      File dest = new File(sdcard, assetPath);
+      FileOutputStream outputStream = new FileOutputStream(dest);
+      Files.copyStreams(assetStream, outputStream);
+      Log.d("TV", dest.getAbsolutePath() + ", copied... " + dest.length());
+    }
+
+  }
+
+
+  @Override
+  public void onTileDestroyed(Tile tile) {
+
+  }
+
+  @Override
+  public void onTileDecodeError(Tile tile, Exception e) {
+    Log.d("TV", "decode error: " + e.getMessage());
+  }
 }
