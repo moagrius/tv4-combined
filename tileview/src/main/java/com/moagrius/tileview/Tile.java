@@ -210,8 +210,6 @@ public class Tile implements Runnable {
             if (piece != null) {
               canvas.drawBitmap(piece, j * size, i * size, null);
             }
-          }
-          if (stream != null) {
             stream.close();
           }
         }
